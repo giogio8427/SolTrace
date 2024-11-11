@@ -69,7 +69,7 @@ void QuadricSurfaceClosedForm(
 	double r = 0.0,r2 = 0.0,a2=0,b2=0,c2=0;
 	double t1 = 0.0,t2 = 0.0,A=0,B=0,C=0,slopemag = 0.0;
 
-	*ErrorFlag = 0;
+	if(*ErrorFlag != -999) *ErrorFlag = 0;
 
 	switch( Element->SurfaceIndex )
 	{
@@ -90,6 +90,8 @@ void QuadricSurfaceClosedForm(
 			Yc = 0.0;
 			Zc = r;
 			
+			if (*ErrorFlag==-999) goto Label_100;
+
 			Xdelta = PosLoc[0] - Xc;
 			Ydelta = PosLoc[1] - Yc;
 			Zdelta = PosLoc[2] - Zc;
