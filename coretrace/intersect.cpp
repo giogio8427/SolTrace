@@ -208,15 +208,7 @@ at intersection point of ray and surface. Path length is also computed.  From Sp
 	char ApertureShapeIndex = ' ';
 	double PosInputToCS = 0.0;
 	int in_quad = 0;
-	double coordCenters[3] = { 0.0, 0.0, 0.0 };
-	double OC[3]= { 0.0, 0.0, 0.0 };
-	double L2oc =  0.0;
-	double d2 = 0.0;
-	double tca = 0.0;
-	double thc = 0.0;
-	double t0 = 0.0, t1 = 0.0, t = 1.0e6;
-	double check_t = 1.0e6;
-	int checkStop = 0;
+
 	*ErrorFlag = 0;
 	for (i=0;i<3;i++)
 	{
@@ -239,59 +231,7 @@ at intersection point of ray and surface. Path length is also computed.  From Sp
 	// JM 6/2023: Using closed form solution for sphere with single axis curvature aperture to avoid numerical problems caused by a bad starting point for Newton-Raphson (algorithm needs to start at a location with a defined z-location on the surface)
 	if ((Element->SurfaceType == 1 || Element->SurfaceType == 7) && (Element->SurfaceIndex == 's' || Element->SurfaceIndex == 'S')) //sphere or partial cylinder
 	{
-		if (Element->SurfaceType == 1 && (Element->SurfaceIndex == 's' || Element->SurfaceIndex == 'S'))
-		{
-			r = 1.0 / Element->VertexCurvX;
-			coordCenters[2] = r;
-			for (i = 0; i < 3; i++)
-			{
-				OC[i] = coordCenters[i] - PosLoc[i];
-			}
-			tca = DOT(OC, CosLoc);
-			if (tca < 0.0) {
-				*ErrorFlag = 1.0;
-				*PathLength = 0.0;
-				return;
-			}
-			else {
-				L2oc = DOT(OC, OC);
-				d2 = L2oc - tca*tca;
-				if (d2 > (r * r)) {
-					*ErrorFlag = 1.0;
-					return;
-				}
-				else {
-					thc = sqrt(r * r - d2);
-					t0 = tca - thc;
-					t1 = tca + thc;
-					if (t0 > 0.0)
-						t = t0;
-						if (PosLoc[2] + t0 * CosLoc[2] > Element->ZAperture)
-							t = t1;
-					if ((t0 < 0 ) && (t1>0))
-							t = t1;
-					if (t0 == 0) t = t1;
-					if (t1 <= 0.0) {
-						*ErrorFlag = 1.0;
-						return;
-					}
-				}
-			}
-
-		*PathLength = t;
-		*ErrorFlag = -999;
-		PosXYZ[0] = PosLoc[0] + t * CosLoc[0];
-		PosXYZ[1] = PosLoc[1] + t * CosLoc[1];
-		PosXYZ[2] = PosLoc[2] + t * CosLoc[2];
-		}
-
-
 		QuadricSurfaceClosedForm(Element, PosLoc, CosLoc, PosXYZ, DFXYZ, PathLength, ErrorFlag);
-		if (abs(*PathLength - t) > 1.0e-5) {
-			checkStop = 1;
-		}
-
-
 		return;
 	}
 

@@ -55,6 +55,16 @@
 
 #define sqr(x) (x*x)
 
+
+void SphereIntersectGeom(
+	double radius,
+	double ZAperture,
+	double PosLoc[3],
+	double CosLoc[3],
+	double PosXYZ[3],
+	double* PathLength,
+	int* ErrorFlag);
+
 void QuadricSurfaceClosedForm(
 			TElement *Element,
 			double PosLoc[3],
@@ -69,7 +79,7 @@ void QuadricSurfaceClosedForm(
 	double r = 0.0,r2 = 0.0,a2=0,b2=0,c2=0;
 	double t1 = 0.0,t2 = 0.0,A=0,B=0,C=0,slopemag = 0.0;
 
-	if(*ErrorFlag != -999) *ErrorFlag = 0;
+	*ErrorFlag = 0;
 
 	switch( Element->SurfaceIndex )
 	{
@@ -90,8 +100,12 @@ void QuadricSurfaceClosedForm(
 			Yc = 0.0;
 			Zc = r;
 			
-			if (*ErrorFlag==-999) goto Label_100;
-
+			if (Element->SurfaceType == 1) {
+				SphereIntersectGeom(r, Element->ZAperture, PosLoc, CosLoc, PosXYZ, PathLength, ErrorFlag);
+				if (*ErrorFlag > 0) return;
+				goto Label_100;
+			}
+				
 			Xdelta = PosLoc[0] - Xc;
 			Ydelta = PosLoc[1] - Yc;
 			Zdelta = PosLoc[2] - Zc;
@@ -308,4 +322,68 @@ Label_100:
 		DFXYZ[2] = -(2.0 * Kz * (PosXYZ[2] - Zc) / c2) / slopemag;
 	}
 }
+
+
+
+void SphereIntersectGeom(
+	double radius,
+	double ZAperture,
+	double PosLoc[3],
+	double CosLoc[3],
+	double PosXYZ[3],
+	double* PathLength,
+	int* ErrorFlag) {
+	// Variable Declarations
+	int i = 0;
+	double coordCenters[3] = { 0.0, 0.0, 0.0 };
+	double OC[3] = { 0.0, 0.0, 0.0 };
+	double L2oc = 0.0;
+	double d2 = 0.0;
+	double tca = 0.0;
+	double thc = 0.0;
+	double t0 = 0.0, t1 = 0.0, t = 1.0e6;
+	double check_t = 1.0e6;
+	int checkStop = 0;
+	
+	coordCenters[2] = radius;
+	for (i = 0; i < 3; i++)
+	{
+		OC[i] = coordCenters[i] - PosLoc[i];
+	}
+	tca = DOT(OC, CosLoc);
+	if (tca < 0.0) {
+		*ErrorFlag = 1.0;
+		*PathLength = 0.0;
+		return;
+	}
+	else {
+		L2oc = DOT(OC, OC);
+		d2 = L2oc - tca * tca;
+		if (d2 > (radius * radius)) {
+			*ErrorFlag = 1.0;
+			return;
+		}
+		else {
+			thc = sqrt(radius * radius - d2);
+			t0 = tca - thc;
+			t1 = tca + thc;
+			if (t0 > 0.0)
+				t = t0;
+			if (PosLoc[2] + t0 * CosLoc[2] > ZAperture)
+				t = t1;
+			if ((t0 < 0) && (t1 > 0))
+				t = t1;
+			if (t0 == 0) t = t1;
+			if (t1 <= 0.0) {
+				*ErrorFlag = 1.0;
+				return;
+			}
+		}
+	}
+	*PathLength = t;
+	PosXYZ[0] = PosLoc[0] + t * CosLoc[0];
+	PosXYZ[1] = PosLoc[1] + t * CosLoc[1];
+	PosXYZ[2] = PosLoc[2] + t * CosLoc[2];
+}
+
 //end of procedure--------------------------------------------------------------
