@@ -78,6 +78,17 @@ void QuadricSurfaceClosedForm(
 	double Xc=0,Yc=0,Zc=0,Kx=0,Ky=0,Kz=0;
 	double r = 0.0,r2 = 0.0,a2=0,b2=0,c2=0;
 	double t1 = 0.0,t2 = 0.0,A=0,B=0,C=0,slopemag = 0.0;
+	
+	int i;
+	double coordCenters[3] = { 0.0, 0.0, 0.0 };
+	double OC[3] = { 0.0, 0.0, 0.0 };
+	double L2oc = 0.0;
+	double d2 = 0.0;
+	double tca = 0.0;
+	double thc = 0.0;
+	double t0 = 0.0, t = 1.0e6;
+	double check_t = 1.0e6;
+	int checkStop = 0;
 
 	*ErrorFlag = 0;
 
@@ -100,9 +111,48 @@ void QuadricSurfaceClosedForm(
 			Yc = 0.0;
 			Zc = r;
 			
-			if (Element->SurfaceType == 1) {
-				SphereIntersectGeom(r, Element->ZAperture, PosLoc, CosLoc, PosXYZ, PathLength, ErrorFlag);
-				if (*ErrorFlag > 0) return;
+			if (Element->SurfaceType == 0) {
+				coordCenters[2] = r;
+				for (i = 0; i < 3; i++)
+				{
+					OC[i] = coordCenters[i] - PosLoc[i];
+				}
+				tca = DOT(OC, CosLoc);
+				if (tca < 0.0) {
+					*ErrorFlag = 1.0;
+					*PathLength = 0.0;
+					return;
+				}
+				else {
+					L2oc = DOT(OC, OC);
+					d2 = L2oc - tca * tca;
+					if (d2 > r2) {
+						*ErrorFlag = 1.0;
+						return;
+					}
+					else {
+						thc = sqrt(r2 - d2);
+						t0 = tca - thc;
+						t1 = tca + thc;
+						if (t0 > 0.0)
+							t = t0;
+						if (PosLoc[2] + t0 * CosLoc[2] > Element->ZAperture)
+							t = t1;
+						if ((t0 < 0) && (t1 > 0))
+							t = t1;
+						if (t0 == 0) t = t1;
+						if (t1 <= 0.0) {
+							*ErrorFlag = 1.0;
+							return;
+						}
+					}
+				}
+				*PathLength = t;
+				PosXYZ[0] = PosLoc[0] + t * CosLoc[0];
+				PosXYZ[1] = PosLoc[1] + t * CosLoc[1];
+				PosXYZ[2] = PosLoc[2] + t * CosLoc[2];
+				//SphereIntersectGeom(r, Element->ZAperture, PosLoc, CosLoc, PosXYZ, PathLength, ErrorFlag);
+				//if (*ErrorFlag > 0) return;
 				goto Label_100;
 			}
 				
