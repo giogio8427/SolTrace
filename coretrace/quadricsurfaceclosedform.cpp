@@ -56,7 +56,7 @@
 #define sqr(x) (x*x)
 
 
-void SphereIntersectGeom(
+/*void SphereIntersectGeom(
 	double radius,
 	double ZAperture,
 	double PosLoc[3],
@@ -64,6 +64,7 @@ void SphereIntersectGeom(
 	double PosXYZ[3],
 	double* PathLength,
 	int* ErrorFlag);
+	*/
 
 void QuadricSurfaceClosedForm(
 			TElement *Element,
@@ -80,15 +81,8 @@ void QuadricSurfaceClosedForm(
 	double t1 = 0.0,t2 = 0.0,A=0,B=0,C=0,slopemag = 0.0;
 	
 	int i;
-	double coordCenters[3] = { 0.0, 0.0, 0.0 };
-	double OC[3] = { 0.0, 0.0, 0.0 };
-	double L2oc = 0.0;
-	double d2 = 0.0;
-	double tca = 0.0;
-	double thc = 0.0;
-	double t0 = 0.0, t = 1.0e6;
-	double check_t = 1.0e6;
-	int checkStop = 0;
+	double OC[3];
+	double L2oc, d2, tca, thc, t0, t;
 
 	*ErrorFlag = 0;
 
@@ -111,46 +105,53 @@ void QuadricSurfaceClosedForm(
 			Yc = 0.0;
 			Zc = r;
 			
-			if (Element->SurfaceType == 0) {
-				coordCenters[2] = r;
-				for (i = 0; i < 3; i++)
-				{
-					OC[i] = coordCenters[i] - PosLoc[i];
-				}
+			if (Element->SurfaceType == 1) {
+				OC[0] = - PosLoc[0];
+				OC[1] = - PosLoc[1];
+				OC[2] = r - PosLoc[2];
 				tca = DOT(OC, CosLoc);
 				if (tca < 0.0) {
-					*ErrorFlag = 1.0;
+					*ErrorFlag = 1;
 					*PathLength = 0.0;
 					return;
 				}
 				else {
-					L2oc = DOT(OC, OC);
+					L2oc=(OC[0] * OC[0] + OC[1] * OC[1] + OC[2] * OC[2]);
+					//L2oc = DOT(OC, OC);
 					d2 = L2oc - tca * tca;
 					if (d2 > r2) {
-						*ErrorFlag = 1.0;
+						*ErrorFlag = 1;
 						return;
 					}
 					else {
 						thc = sqrt(r2 - d2);
 						t0 = tca - thc;
 						t1 = tca + thc;
-						if (t0 > 0.0)
+						if (t0 > 0.0) {
 							t = t0;
-						if (PosLoc[2] + t0 * CosLoc[2] > Element->ZAperture)
-							t = t1;
-						if ((t0 < 0) && (t1 > 0))
-							t = t1;
-						if (t0 == 0) t = t1;
-						if (t1 <= 0.0) {
-							*ErrorFlag = 1.0;
-							return;
+							PosXYZ[2] = PosLoc[2] + t * CosLoc[2];
+							if (PosXYZ[2] > Element->ZAperture)	t = t1;
+						}
+						else{
+							if ((t0 < 0) && (t1 > 0))
+								t = t1;
+							if (t0 == 0) t = t1;
+							if (t1 <= 0.0) {
+								*ErrorFlag = 1;
+								return;
+						}
 						}
 					}
+				}
+				PosXYZ[2] = PosLoc[2] + t * CosLoc[2];
+				if (PosXYZ[2] > Element->ZAperture) {
+					*ErrorFlag = 1;
+					return;
 				}
 				*PathLength = t;
 				PosXYZ[0] = PosLoc[0] + t * CosLoc[0];
 				PosXYZ[1] = PosLoc[1] + t * CosLoc[1];
-				PosXYZ[2] = PosLoc[2] + t * CosLoc[2];
+				
 				//SphereIntersectGeom(r, Element->ZAperture, PosLoc, CosLoc, PosXYZ, PathLength, ErrorFlag);
 				//if (*ErrorFlag > 0) return;
 				goto Label_100;
@@ -374,7 +375,7 @@ Label_100:
 }
 
 
-
+/*
 void SphereIntersectGeom(
 	double radius,
 	double ZAperture,
@@ -435,5 +436,6 @@ void SphereIntersectGeom(
 	PosXYZ[1] = PosLoc[1] + t * CosLoc[1];
 	PosXYZ[2] = PosLoc[2] + t * CosLoc[2];
 }
+*/
 
 //end of procedure--------------------------------------------------------------
