@@ -109,10 +109,10 @@ void QuadricSurfaceClosedForm(
 				OC[0] = - PosLoc[0];
 				OC[1] = - PosLoc[1];
 				OC[2] = r - PosLoc[2];
-				tca = DOT(OC, CosLoc);
+				//tca = DOT(OC, CosLoc);
+				tca=(OC[0] * CosLoc[0] + OC[1] * CosLoc[1] + OC[2] * CosLoc[2]);
 				if (tca < 0.0) {
 					*ErrorFlag = 1;
-					*PathLength = 0.0;
 					return;
 				}
 				else {
@@ -130,16 +130,21 @@ void QuadricSurfaceClosedForm(
 						if (t0 > 0.0) {
 							t = t0;
 							PosXYZ[2] = PosLoc[2] + t * CosLoc[2];
-							if (PosXYZ[2] > Element->ZAperture)	t = t1;
+							if (PosXYZ[2] > Element->ZAperture) {
+								t = t1;
+							}
 						}
 						else{
-							if ((t0 < 0) && (t1 > 0))
+							if ((t0 < 0) && (t1 > 0)) {
 								t = t1;
-							if (t0 == 0) t = t1;
+							}
+							if (t0 == 0) {
+								t = t1;
+							}
 							if (t1 <= 0.0) {
 								*ErrorFlag = 1;
 								return;
-						}
+							}
 						}
 					}
 				}
